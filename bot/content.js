@@ -1,18 +1,22 @@
 //debugger;
 //first, tell the background page that this is the tab that wants to receive the messages.
-console.log("@@ start++");
+console.log("@@ content start");
 //chrome.runtime.sendMessage({ from: "content" });
-console.log("@@ start--");
+//console.log("@@ start--");
 
-window.addEventListener("load", myMain, false);
+chrome.runtime.sendMessage('myTabId?', response => {
+    console.log('My tabId is', response);
+});
 
-function myMain(evt) {
-    // DO YOUR STUFF HERE.
-    console.log("myMain " + evt);
-    // document.all[0].outerHTML
+//window.addEventListener("load", myMain, false);
 
-    console.log(document);
-}
+//function myMain(evt) {
+//    // DO YOUR STUFF HERE.
+//    console.log("myMain " + evt.type);
+//    // document.all[0].outerHTML
+
+//    console.log(document);
+//}
 
 // Listen for messages
 //chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {

@@ -6,22 +6,33 @@
 var contentTabId;
 
 var chkTxt = "unknown....";
+var sentChkTxt = false;
 var clickTime = new Date(0);
 //console.log('diff=' + (new Date() - clickTime));
 
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // 2. A page requested user data, respond with a copy of `user`
-    if (message === 'get-user-data') {
+    if (message == 'get-user-data') {
 
-        let tDiff = (new Date() - clickTime);
-
-        console.log(message + ": time diff= " + tDiff);
+        //let tDiff = (new Date() - clickTime);
+        //console.log("get chkTxt : time diff= " + tDiff);
 
         //if (tDiff < 2000) sendResponse("wait:" + chkTxt)
-        if (clickTime.getTime() > 0) sendResponse("clicked:" + chkTxt)
-        else sendResponse(chkTxt);
+        var resp;
+        if (!sentChkTxt) {
+            sentChkTxt = true;
+            resp = chkTxt;
+        }
+        else {
+            if (clickTime.getTime() > 0) resp = "clicked:" + chkTxt;
+            else resp = "sent:" + chkTxt;
+        }
+
+        sendResponse(resp);
+        console.log('@@ send chkTxt:' + resp + ' ->' + sender.tab.id);
     }
+    else if (message == 'myTabId?') sendResponse(sender.tab.id);
 
 });
 
@@ -32,9 +43,9 @@ chrome.runtime.onMessage.addListener(function (msg, sender) {
     }
 
     if (msg.from == "clicked") {
-        console.log('clicked');
-        //chkTxt = null;
         clickTime = new Date();
+        //chkTxt = null;
+        console.log('@@ clicked(' + sender.tab.id + ')' + clickTime.toLocaleTimeString() + clickTime.getMilliseconds());
     }
 
 
@@ -133,7 +144,7 @@ function triggerDelay(time) {
             }
         } else {
             if (newURL != null)
-                chrome.tabs.create({ url: newURL }, function (tab) { console.log('tab created:' + tab.id); });
+                chrome.tabs.create({ url: newURL }, function (tab) { console.log('@@@ tab created:' + tab.id); });
         }
 
         if (++repeat >= 22)
@@ -152,6 +163,7 @@ chrome.browserAction.onClicked.addListener(function (tab) {
     //chkTxt = "unknown....";
     clickTime = new Date(0);
     repeat = 0;
+    sentChkTxt = false;
 
     contentTabId = tab.id;
     let str1 = 'set contentTabId=' + contentTabId

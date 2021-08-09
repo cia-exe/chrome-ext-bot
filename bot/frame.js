@@ -1,8 +1,8 @@
 //debugger;
 //first, tell the background page that this is the tab that wants to receive the messages.
-console.log("@f@ start++");
+console.log("@f@ start");
 //chrome.runtime.sendMessage({ from: "content" });
-console.log("@f@ start--");
+//console.log("@f@ start--");
 
 var chkTxt = "unknown"
 //chrome.runtime.onMessage.addListener(function(msg,sender) {
@@ -29,7 +29,7 @@ function checkAndSet(str) {
         element = c;
 
         //get value from background
-        chrome.runtime.sendMessage('get-user-data', (response) => {
+        chrome.runtime.sendMessage('get-user-data', response => {
             // 3. Got an asynchronous response with the data from the background
             console.log('received user data', response);
             chkTxt = response
@@ -39,10 +39,11 @@ function checkAndSet(str) {
                 c.value = chkTxt
 
                 let b = document.getElementsByName("Button1")[0];
-                console.log('b=' + b);
+
                 if (b != null) {
                     b.click();
                     chrome.runtime.sendMessage({ from: "clicked" });
+                    console.log('@@ click:' + b);
                 }
             }
 
@@ -73,7 +74,7 @@ function checkAndSet(str) {
 window.addEventListener("load", myMain, false);
 function myMain(evt) {
     // DO YOUR STUFF HERE.
-    console.log("myMain " + evt);
+    console.log("myMain " + evt.type);
     // document.all[0].outerHTML
 
     // console.log(document);
@@ -84,22 +85,22 @@ function myMain(evt) {
 }
 
 // Listen for messages
-chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-    //chrome.runtime.onMessage.addListener(function (msg,sender) {
-    // If the received message has the expected format...
-    //console.log("@@ " + msg.value + " " + sender + " " + sendResponse); //@@ JR26 [object Object] function () { [native code] }
-    console.log("@@ " + msg.value + " " + sender);
+//chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+//    //chrome.runtime.onMessage.addListener(function (msg,sender) {
+//    // If the received message has the expected format...
+//    //console.log("@@ " + msg.value + " " + sender + " " + sendResponse); //@@ JR26 [object Object] function () { [native code] }
+//    console.log("@@ " + msg.value + " " + sender);
 
-    if (msg.text === 'report_back') {
-        // Call the specified callback, passing
-        // the web-page's DOM content as argument
+//    if (msg.text === 'report_back') {
+//        // Call the specified callback, passing
+//        // the web-page's DOM content as argument
 
-        console.log("@@ " + element);
-        if (element != null) element.value = msg.value;
-        chkTxt = msg.value;
-        console.log("set chkTxt " + chkTxt);
-        //sendResponse(element);
-        //sendResponse(document.all[0].outerHTML);
-    }
+//        console.log("@@ " + element);
+//        if (element != null) element.value = msg.value;
+//        chkTxt = msg.value;
+//        console.log("set chkTxt " + chkTxt);
+//        //sendResponse(element);
+//        //sendResponse(document.all[0].outerHTML);
+//    }
 
-});
+//});
