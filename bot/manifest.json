@@ -1,0 +1,32 @@
+{
+    "name": "Bot Test Ext",
+    "version": "0.8",
+    "description": "Testing Bot",
+    "permissions": [ "storage", "activeTab", "cookies", "tabs", "http://*/*", "https://*/*" ],
+    "icons": {
+        "16": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+    },
+    "browser_action": {
+        "default_icon": "icon.png"
+    },
+    "background": {
+        "persistent": true,
+        "scripts": [ "background.js" ]
+    },
+    "content_scripts": [
+        {
+            "run_at": "document_end",
+            "matches": [ "*://*/*" ],
+            "js": [ "content.js" ]
+        },
+        {
+            "matches": [ "*://*/*" ],
+            "all_frames": true,
+            "js": [ "frame.js" ]
+        }
+    ],
+
+    "manifest_version": 2
+}
