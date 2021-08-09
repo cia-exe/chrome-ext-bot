@@ -104,9 +104,11 @@ function focusOrCreateTab(url) {
     });
 }
 
-var repeatDelay = 999;
+var repeatDelay = 777;
 var repeat = 0;
 var timeoutId;
+var newURL;
+
 function triggerDelay(time) {
 
     if (timeoutId != null) clearTimeout(timeoutId);
@@ -124,12 +126,17 @@ function triggerDelay(time) {
             return;
         }
 
-        if (contentTabId != null) {
-            console.log('@@@ reload!' + contentTabId);
-            chrome.tabs.reload(contentTabId);
+        if (repeat == 0) {
+            if (contentTabId != null) {
+                console.log('@@@ reload!' + contentTabId);
+                chrome.tabs.reload(contentTabId);
+            }
+        } else {
+            if (newURL != null)
+                chrome.tabs.create({ url: newURL }, function (tab) { console.log('tab created:' + tab.id); });
         }
 
-        if (++repeat >= 18)
+        if (++repeat >= 22)
             console.log('repeat over!') //alert('repeat over!');
         else triggerDelay(repeatDelay);
 
@@ -150,6 +157,14 @@ chrome.browserAction.onClicked.addListener(function (tab) {
     let str1 = 'set contentTabId=' + contentTabId
     console.log(str1);
 
+    //----------------------------
+    newURL = tab.url;
+    //for (let i = 0; i < 3; i++) {
+    //    chrome.tabs.create({ url: newURL }, function (tab) { console.log('tab created:' + tab.id); });
+    //}
+
+
+    //-----------------------------
     let n = new Date();
     //console.log('now:' + n.toDateString());
     //console.log('now:' + n.toLocaleDateString());
@@ -159,11 +174,11 @@ chrome.browserAction.onClicked.addListener(function (tab) {
 
     let hours = n.getHours();
     var t;
-    if (hours <= 15 || hours >= 14) t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 16, 0, 0, 0);
+    if (hours == 15) t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 16, 0, 0, 0);
     else
         t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), hours, n.getMinutes() + 1, 0, 0);
 
-    triggerDelay(t - n - repeatDelay * 2 - 15); // before ?ms; call it ASAP because now is running!
+    triggerDelay(t - n - repeatDelay * 3 - 15); // before ?ms; call it ASAP because now is running!
 
     let str2 = 'target time:' + t.toLocaleTimeString() + ', now=' + n.toLocaleTimeString();
     console.log(str2);
