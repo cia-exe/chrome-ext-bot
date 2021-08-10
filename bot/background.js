@@ -115,7 +115,7 @@ function focusOrCreateTab(url) {
     });
 }
 
-var repeatDelay = 777;
+var repeatDelay = 486;
 var repeat = 0;
 var timeoutId;
 var newURL;
@@ -190,7 +190,11 @@ chrome.browserAction.onClicked.addListener(function (tab) {
     else
         t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), hours, n.getMinutes() + 1, 0, 0);
 
-    triggerDelay(t - n - repeatDelay * 3 - 15); // before ?ms; call it ASAP because now is running!
+    // When processing the request, the server may check the current time to return different results instead of checking the sending time of the request header.
+    // Thus, when the server is busy, it processes the request sent a long time ago.
+    let triggerTimesBeforeTarget = 13;
+    let shiftTarget = 15;
+    triggerDelay(t - n - repeatDelay * triggerTimesBeforeTarget - shiftTarget); // call it ASAP because now is running!
 
     let str2 = 'target time:' + t.toLocaleTimeString() + ', now=' + n.toLocaleTimeString();
     console.log(str2);
