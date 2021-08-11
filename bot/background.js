@@ -2,7 +2,30 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+function toTimeStr(d) {
+    return d.toLocaleTimeString('en-GB') + '.' + d.getMilliseconds();
+}
 
+function toDateTimeStr(d) {
+    // note: We can enable 'Show timestamps' in Settings of Chrome DevTools as well!
+    return d.toLocaleDateString() + '(' + toTimeStr(d) + ')';
+}
+
+
+//function test() {
+//    let n = new Date();
+//    console.log('fn:' + toTimeStr(n));
+//    console.log('fn:' + toDateTimeStr(n));
+
+//    console.log('now:' + n.toDateString('en-GB') + " @@ " + n.toDateString()); // same: Wed Aug 11 2021
+//    console.log('now:' + n.toLocaleDateString('en-GB') + " @@ " + n.toLocaleDateString()); //now:11/08/2021 @@ 2021/8/11
+//    console.log('now:' + n.toTimeString('en-GB') + " @@ " + n.toTimeString()); // same: 17:56:00 GMT+0800
+//    console.log('now:' + n.toLocaleTimeString('en-GB') + " @@ " + n.toLocaleTimeString()); // now:17:56:00 @@ ¤U¤È5:56:00
+//}
+//test();
+
+
+var tabMap = new Map();
 var contentTabId;
 
 var chkTxt = "unknown....";
@@ -13,7 +36,7 @@ var clickTime = new Date(0);
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // 2. A page requested user data, respond with a copy of `user`
-    if (message == 'get-user-data') {
+    if (message === 'get-user-data') {
 
         //let tDiff = (new Date() - clickTime);
         //console.log("get chkTxt : time diff= " + tDiff);
@@ -32,24 +55,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse(resp);
         console.log('@@ send chkTxt:' + resp + ' ->' + sender.tab.id);
     }
-    else if (message == 'myTabId?') sendResponse(sender.tab.id);
+    else if (message === 'myTabId?') sendResponse(sender.tab.id);
 
 });
 
 chrome.runtime.onMessage.addListener(function (msg, sender) {
-    if (msg.from == "content") {  //get content scripts tab id
+    if (msg.from === "content") {  //get content scripts tab id
         contentTabId = sender.tab.id;
         console.log('set contentTabId=' + contentTabId);
     }
 
-    if (msg.from == "clicked") {
+    if (msg.from === "clicked") {
         clickTime = new Date();
         //chkTxt = null;
-        console.log('@@ clicked(' + sender.tab.id + ')' + clickTime.toLocaleTimeString() + clickTime.getMilliseconds());
+        console.log('@@ clicked(' + sender.tab.id + ')' + toTimeStr(clickTime));
     }
 
 
-    //  if (msg.from == "popup" && contentTabId) {  //got message from popup
+    //  if (msg.from === "popup" && contentTabId) {  //got message from popup
     //    chrome.tabs.sendMessage(contentTabId, {  //send it to content script
     //      from: "background",
     //      first: msg.first,
@@ -73,7 +96,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender) {
 chrome.cookies.onChanged.addListener(function (info) {
     //console.log("onChanged" + JSON.stringify(info));
 
-    if (!info.removed && info.cookie.name == "CheckCode") {
+    if (!info.removed && info.cookie.name === "CheckCode") {
         let x = info.cookie.value
         console.log("@@ " + x);
         chkTxt = x
@@ -115,7 +138,7 @@ function focusOrCreateTab(url) {
     });
 }
 
-var repeatDelay = 486;
+var repeatDelay = 386;
 var repeat = 0;
 var timeoutId;
 var newURL;
@@ -127,33 +150,42 @@ function triggerDelay(time) {
     timeoutId = setTimeout(function () {
 
         let n = new Date();
-        console.log('@ ' + repeat + ' trigger(id=' + timeoutId + ')' + n + ":" + n.getMilliseconds() + '... tabId=' + contentTabId)
+        console.log('@ ' + repeat + ' trigger(id=' + timeoutId + ')..' + toTimeStr(n)); // + '.. tabId=' + contentTabId)
 
         timeoutId = null;
 
         if (clickTime.getTime() > 0) {
-            console.log("stop repeat! clicked at!" + clickTime.toLocaleTimeString());
+            console.log("stop repeat! clicked at!" + toTimeStr(clickTime));
             //alert("clicked at!" + clickTime.toLocaleTimeString());
             return;
         }
 
-        if (repeat == 0) {
-            if (contentTabId != null) {
-                console.log('@@@ reload!' + contentTabId);
-                chrome.tabs.reload(contentTabId);
-            }
-        } else {
-            if (newURL != null)
-                chrome.tabs.create({ url: newURL }, function (tab) { console.log('@@@ tab created:' + tab.id); });
+        if (contentTabId == null) {
+            console.log("stop repeat! because main tab has been removed!");
+            return;
         }
 
-        if (++repeat >= 22)
+        if (repeat === 0) { // reload main tab at 1st time
+
+            tabMap.set(contentTabId, Date.now())
+            console.log('@@@ reload!' + contentTabId);
+            chrome.tabs.reload(contentTabId);
+
+        } else {
+            if (newURL != null)
+                chrome.tabs.create({ url: newURL }, function (tab) {
+                    tabMap.set(tab.id, Date.now())
+                    console.log('@@@ tab created:' + tab.id);
+                });
+        }
+
+        if (++repeat >= 24)
             console.log('repeat over!') //alert('repeat over!');
         else triggerDelay(repeatDelay);
 
     }, time);
 
-    console.log('setTimeout(' + time + '), id=' + timeoutId);
+    //console.log('setTimeout(' + time + '), id=' + timeoutId);
 
 }
 
@@ -165,40 +197,38 @@ chrome.browserAction.onClicked.addListener(function (tab) {
     repeat = 0;
     sentChkTxt = false;
 
+    newURL = tab.url;
     contentTabId = tab.id;
-    let str1 = 'set contentTabId=' + contentTabId
-    console.log(str1);
+    let strTab = newURL + ' set contentTabId=' + contentTabId
+    //console.log(strTab);
 
     //----------------------------
-    newURL = tab.url;
     //for (let i = 0; i < 3; i++) {
     //    chrome.tabs.create({ url: newURL }, function (tab) { console.log('tab created:' + tab.id); });
     //}
 
 
     //-----------------------------
-    let n = new Date();
-    //console.log('now:' + n.toDateString());
-    //console.log('now:' + n.toLocaleDateString());
-    //console.log('now:' + n.toTimeString());
-    //console.log('now:' + n.toLocaleTimeString());
     //Date(year, month, day, hours, minutes, seconds, milliseconds)
-
+    let n = new Date();
     let hours = n.getHours();
     var t;
-    if (hours == 15) t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 16, 0, 0, 0);
+    if (hours === 15) t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 16, 0, 0, 0);
     else
         t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), hours, n.getMinutes() + 1, 0, 0);
 
     // When processing the request, the server may check the current time to return different results instead of checking the sending time of the request header.
     // Thus, when the server is busy, it processes the request sent a long time ago.
-    let triggerTimesBeforeTarget = 13;
+    let triggerTimesBeforeTarget = 16;
     let shiftTarget = 15;
     triggerDelay(t - n - repeatDelay * triggerTimesBeforeTarget - shiftTarget); // call it ASAP because now is running!
 
-    let str2 = 'target time:' + t.toLocaleTimeString() + ', now=' + n.toLocaleTimeString();
-    console.log(str2);
-    alert(str1 + '\n' + str2); // blocking 
+    let strTime = 'target time:' + toDateTimeStr(t) + ', now=' + toTimeStr(n);
+
+    let oStr = strTab + '\n' + strTime;
+    console.log(oStr);
+    alert(oStr); // blocking
+
     //var manager_url = chrome.extension.getURL("manager.html");
     //focusOrCreateTab(manager_url);
 });
@@ -222,3 +252,30 @@ function doStuffWithDom(domContent) {
 //        chrome.tabs.sendMessage(tab.id, {text: 'report_back'}, doStuffWithDom);
 //    }
 //});
+
+
+//--------------------------------
+
+chrome.tabs.onRemoved.addListener(function (tabId, info) {
+    //info: isWindowClosing: True when the tab was closed because its parent window was closed.
+    // windowId
+
+    if (tabId === contentTabId) contentTabId = null
+    tabMap.delete(tabId)
+    console.log('@removed(' + info.windowId + ', isWindowClosing:' + info.isWindowClosing + ')' + tabId + '/' + tabMap.size)
+});
+
+chrome.tabs.onUpdated.addListener(function (tabId, info) {
+
+    //console.log('@' + tabId + '->' + info.status)
+    if (info.status === 'complete') {
+        let t = tabMap.get(tabId)
+        tabMap.delete(tabId)
+
+        if (t != null) {
+            let now = Date.now()
+            console.log('@loaded duration:' + tabId + '->' + (now - t) / 1000.0)
+        }
+    }// else if (info.status === 'loading') {}
+
+});

@@ -7,7 +7,7 @@ console.log("@f@ start");
 var chkTxt = "unknown"
 //chrome.runtime.onMessage.addListener(function(msg,sender) {
 //    console.log("@@ " + msg);
-//  if (msg.from == "setChkTxt") {  //get content scripts tab id
+//  if (msg.from === "setChkTxt") {  //get content scripts tab id
 //    chkTxt = msg.value;
 //    console.log('chkTxt=' + chkTxt);
 //  }
