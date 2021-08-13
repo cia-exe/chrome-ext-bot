@@ -138,7 +138,7 @@ function focusOrCreateTab(url) {
     });
 }
 
-var repeatDelay = 386;
+var repeatDelay = 700;
 var repeat = 0;
 var timeoutId;
 var newURL;
@@ -165,21 +165,24 @@ function triggerDelay(time) {
             return;
         }
 
-        if (repeat === 0) { // reload main tab at 1st time
+        //if (repeat === 0) { // reload main tab at 1st time
 
-            tabMap.set(contentTabId, Date.now())
-            console.log('@@@ reload!' + contentTabId);
-            chrome.tabs.reload(contentTabId);
+        //    tabMap.set(contentTabId, Date.now())
+        //    console.log('@@@ reload!' + contentTabId);
+        //    chrome.tabs.reload(contentTabId);
 
-        } else {
-            if (newURL != null)
-                chrome.tabs.create({ url: newURL }, function (tab) {
+        //} else
+        {
+            if (newURL != null) {
+                newURL.pathname = pathArr[repeat]
+                chrome.tabs.create({ active: true, url: newURL.href }, function (tab) {
                     tabMap.set(tab.id, Date.now())
                     console.log('@@@ tab created:' + tab.id);
                 });
+            }
         }
 
-        if (++repeat >= 24)
+        if (++repeat >= 10)
             console.log('repeat over!') //alert('repeat over!');
         else triggerDelay(repeatDelay);
 
@@ -189,6 +192,7 @@ function triggerDelay(time) {
 
 }
 
+var pathArr
 chrome.browserAction.onClicked.addListener(function (tab) {
 
     //reset data
@@ -197,10 +201,18 @@ chrome.browserAction.onClicked.addListener(function (tab) {
     repeat = 0;
     sentChkTxt = false;
 
-    newURL = tab.url;
+    newURL = new URL(tab.url);
     contentTabId = tab.id;
     let strTab = newURL + ' set contentTabId=' + contentTabId
-    //console.log(strTab);
+
+    pathArr = magic(newURL.pathname)
+
+    //console.log(newURL.hostname + '*' + newURL.pathname + '*' + newURL.origin + '*' + newURL.href);
+    //hostname=localhost
+    //pathname=/xxxxX/
+    //origin=http://localhost:9900
+    //href=http://localhost:9900/xxxxX/
+
 
     //----------------------------
     //for (let i = 0; i < 3; i++) {
@@ -219,8 +231,8 @@ chrome.browserAction.onClicked.addListener(function (tab) {
 
     // When processing the request, the server may check the current time to return different results instead of checking the sending time of the request header.
     // Thus, when the server is busy, it processes the request sent a long time ago.
-    let triggerTimesBeforeTarget = 16;
-    let shiftTarget = 15;
+    let triggerTimesBeforeTarget = 2;
+    let shiftTarget = 33; // find it from the logs of test server
     triggerDelay(t - n - repeatDelay * triggerTimesBeforeTarget - shiftTarget); // call it ASAP because now is running!
 
     let strTime = 'target time:' + toDateTimeStr(t) + ', now=' + toTimeStr(n);
@@ -279,3 +291,80 @@ chrome.tabs.onUpdated.addListener(function (tabId, info) {
     }// else if (info.status === 'loading') {}
 
 });
+
+//chrome.tabs.onActivated.addListener(function (info) {
+
+//    console.log('@@onActivated:' + info.tabId)
+
+//});
+
+
+
+function toBinStr(dec) {
+    return (dec >>> 0).toString(2);
+    //(-1).toString(2) output is "-1"
+    //(-1 >>> 0) will shift 0 bits to the right, which doesn't change the number but it will be represented as an unsigned integer.
+
+    //console.log(toBinStr(1)); // 1
+    //console.log(toBinStr(-1)); // 11111111111111111111111111111111
+    //console.log(toBinStr(256)); // 100000000
+    //console.log(toBinStr(-256)); // 11111111111111111111111100000000
+}
+
+var StringBuilder = function () {
+    this._sArray = new Array();
+}
+StringBuilder.prototype.append = function (str) {
+    this._sArray.push(str);
+}
+StringBuilder.prototype.toString = function () {
+    return this._sArray.join('');
+}
+
+
+
+function magic(str) {
+
+    if (str[0] !== '/') {
+        console.log('str must begin with / !!!')
+        return null
+    }
+
+    if (str.size < 5) {
+        console.log('err str to small!!!')
+        return null
+    }
+
+    let subStr = str.substr(5)
+    console.log(subStr)
+
+    str = str.toLowerCase()
+    let arr = [str[1], str[2], str[3], str[4]]
+    console.log(arr)
+
+    let out = []
+    for (let i = 0; i < 16; i++) {
+
+        let bin = toBinStr(i).padStart(4, '0')
+
+        //let bin = toBinStr(i)
+        //bin = "0000".substr(bin.length) + bin;
+
+        //console.log(bin)
+
+        var sb = new StringBuilder()
+        sb.append(str[0])
+        for (let i = 0; i < 4; i++) {
+            if (bin[i] === '1') sb.append(arr[i].toUpperCase())
+            else sb.append(arr[i])
+        }
+        sb.append(subStr)
+        out.push(sb.toString())
+    }
+
+    console.log(out)
+    return out
+}
+
+//var o = magic('/AbcDefGhi/')
+//console.log(o)
