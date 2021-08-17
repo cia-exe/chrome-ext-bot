@@ -138,7 +138,6 @@ function focusOrCreateTab(url) {
     });
 }
 
-var repeatDelay = 700;
 var repeat = 0;
 var timeoutId;
 var newURL;
@@ -175,22 +174,104 @@ function triggerDelay(time) {
         {
             if (newURL != null) {
                 newURL.pathname = pathArr[repeat]
-                chrome.tabs.create({ active: true, url: newURL.href }, function (tab) {
+                chrome.tabs.create({ active: false, url: newURL.href }, function (tab) {
                     tabMap.set(tab.id, Date.now())
                     console.log('@@@ tab created:' + tab.id);
                 });
             }
         }
 
-        if (++repeat >= 10)
-            console.log('repeat over!') //alert('repeat over!');
-        else triggerDelay(repeatDelay);
+
+        triggerAtDate(triggerDates[++repeat])
+
+        //if (++repeat >= 8) // by init()
+        //    console.log('repeat over!') //alert('repeat over!');
+        //else triggerDelay(repeatDelay);
 
     }, time);
 
     //console.log('setTimeout(' + time + '), id=' + timeoutId);
-
 }
+
+function triggerAtDate(date) {
+
+    //let xxx = triggerDates[100]
+    //console.log('@ xxx=' + xxx)
+    //console.log('@==' + (xxx == null))
+    //console.log('@===' + (xxx === null))
+
+    if (date == null) console.log('@ stop trigger at null')
+    else triggerDelay(date.getTime() - Date.now())
+}
+
+
+var triggerDates
+function initTriggerDates() {
+
+    // test by local testServer
+    // set     52000 56200 59967 61000 63000 65000
+    // trigger 52017 56212 59983 61010 63002 65007
+    // create  52037 56227 59998 61025 63018 65023 
+    // server  52346 56236 60005 61035 63028 65030
+    // delay=  346   36    38    35    28    30
+    // server2 52335 56237 59998 61028 63032 65036
+    // delay2= 335   37    31    28    32    36
+
+    let shiftTarget = 30; // find it from the logs of test server
+    let triggerSecs = [52000, 56200, 60000 - shiftTarget, 61000, 63000, 65000]
+    //let triggerSecs = [53000,56500,57200, 57900, 58600, 59300, 59985, 60590, 61290, 62000, 63000]
+
+    let n = new Date()
+
+    let debug = !(n.getHours() === 15 && n.getMinutes() > 40)
+
+    let t = debug ? //Date(year, month, day, hours, minutes, seconds, milliseconds)
+        new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), (n.getSeconds() > 40 ? n.getMinutes() + 1 : n.getMinutes()), 0, 0)
+        : new Date(n.getFullYear(), n.getMonth(), n.getDate(), 15, 59, 0, 0);
+
+    let i = 0
+    triggerDates = Array.from(triggerSecs, s => new Date(t.getTime() + triggerSecs[i++]))
+
+    triggerDates.forEach((o, i) => console.log('triggerDate(' + i + ') ' + toTimeStr(o)))
+    //console.log(triggerTimes)
+    //console.log(Array.from(triggerTimes, o => toTimeStr(o)))
+
+    let ttime = triggerDates[repeat]
+    triggerAtDate(ttime)
+
+    return ttime
+}
+
+
+var repeatDelay = 700;
+function initTrggerInterval() {
+
+    let n = new Date();
+    let hours = n.getHours();
+    var t;
+
+    //Date(year, month, day, hours, minutes, seconds, milliseconds)
+    if (hours === 15) t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 16, 0, 0, 0);
+    else
+        t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), hours, n.getMinutes() + 1, 0, 0);
+
+    // When processing the request, the server may check the current time to return different results instead of checking the sending time of the request header.
+    // Thus, when the server is busy, it processes the request sent a long time ago.
+    let triggerTimesBeforeTarget = 4;
+    let shiftTarget = 33; // find it from the logs of test server
+
+    // The actual trigger time will be delayed, and each time the delay will accumulate. e.g:
+    // (1) 60000-700*4-33 = 57167. actual triggered at 57183, delay = 16
+    // (2) 60000-700*3-33 = 57867. but set as 57183+700 = 57883. actual triggered at 57899, delay = 32
+    // (3) 60000-700*2-33 = 58567. actual triggered at 58614, delay = 47
+    // (4) 60000-700*1-33 = 59267. actual triggered at 59330, delay = 63
+    // (5) 60000-33       = 59967. actual triggered at 60045, delay = 78
+    triggerDelay(t - n - repeatDelay * triggerTimesBeforeTarget - shiftTarget); // call it ASAP because now is running!
+
+    return t
+}
+
+
 
 var pathArr
 chrome.browserAction.onClicked.addListener(function (tab) {
@@ -219,27 +300,14 @@ chrome.browserAction.onClicked.addListener(function (tab) {
     //    chrome.tabs.create({ url: newURL }, function (tab) { console.log('tab created:' + tab.id); });
     //}
 
+    let t = initTriggerDates()
+    //let t = initTrggerInterval()
 
-    //-----------------------------
-    //Date(year, month, day, hours, minutes, seconds, milliseconds)
-    let n = new Date();
-    let hours = n.getHours();
-    var t;
-    if (hours === 15) t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 16, 0, 0, 0);
-    else
-        t = new Date(n.getFullYear(), n.getMonth(), n.getDate(), hours, n.getMinutes() + 1, 0, 0);
-
-    // When processing the request, the server may check the current time to return different results instead of checking the sending time of the request header.
-    // Thus, when the server is busy, it processes the request sent a long time ago.
-    let triggerTimesBeforeTarget = 2;
-    let shiftTarget = 33; // find it from the logs of test server
-    triggerDelay(t - n - repeatDelay * triggerTimesBeforeTarget - shiftTarget); // call it ASAP because now is running!
-
-    let strTime = 'target time:' + toDateTimeStr(t) + ', now=' + toTimeStr(n);
-
+    let strTime = 'target time:' + toDateTimeStr(t) + ', now=' + toTimeStr(new Date());
     let oStr = strTab + '\n' + strTime;
     console.log(oStr);
     alert(oStr); // blocking
+
 
     //var manager_url = chrome.extension.getURL("manager.html");
     //focusOrCreateTab(manager_url);
@@ -325,22 +393,26 @@ StringBuilder.prototype.toString = function () {
 
 function magic(str) {
 
+    //console.log(str)
+    //console.log(str.length)
+    //console.log(str.size)
+
     if (str[0] !== '/') {
         console.log('str must begin with / !!!')
         return null
     }
 
-    if (str.size < 5) {
+    if (str.length < 5) {
         console.log('err str to small!!!')
         return null
     }
 
     let subStr = str.substr(5)
-    console.log(subStr)
+    //console.log(subStr)
 
     str = str.toLowerCase()
     let arr = [str[1], str[2], str[3], str[4]]
-    console.log(arr)
+    //console.log(arr)
 
     let out = []
     for (let i = 0; i < 16; i++) {
@@ -362,7 +434,7 @@ function magic(str) {
         out.push(sb.toString())
     }
 
-    console.log(out)
+    //console.log(out)
     return out
 }
 
