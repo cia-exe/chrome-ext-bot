@@ -5,7 +5,7 @@ console.log("@@ content start");
 //console.log("@@ start--");
 
 chrome.runtime.sendMessage('myTabId?', response => {
-    console.log('My tabId is', response);
+    console.log('@@ My tabId is', response);
 });
 
 //window.addEventListener("load", myMain, false);
