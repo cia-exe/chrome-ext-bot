@@ -8,6 +8,12 @@ function toDateTimeStr(d) {
     return d.toLocaleDateString() + '(' + toTimeStr(d) + ')';
 }
 
+Date.prototype.addDays = function (days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
 
 var tabMap = new Map();
 var contentTabId;
@@ -142,8 +148,8 @@ function refreshDelay(time) {
         timeoutId2 = null;
 
         //if (newURL != null) {
-            chrome.tabs.update(contentTabId, { "selected": false });
-            refreshDelay(time);
+        chrome.tabs.reload(contentTabId);
+        refreshDelay(time);
         //}
 
     }, time);
@@ -183,6 +189,11 @@ function initTriggerDates() {
     let t = debug ? //Date(year, month, day, hours, minutes, seconds, milliseconds)
         new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), (n.getSeconds() > 40 ? n.getMinutes() + 1 : n.getMinutes()), 0, 0)
         : new Date(n.getFullYear(), n.getMonth(), n.getDate(), 9, 59, 0, 0);
+
+    if (n > t) { // now < target
+        t = t.addDays(1);
+        console.log(`add 1day to t, now=${n}, t=${t}`);
+    }
 
     let i = 0
     triggerDates = Array.from(triggerSecs, s => new Date(t.getTime() + triggerSecs[i++]))
@@ -235,7 +246,7 @@ chrome.browserAction.onClicked.addListener(function (tab) {
 
     //var manager_url = chrome.extension.getURL("manager.html");
     //focusOrCreateTab(manager_url);
-    //refreshDelay(9000);
+    refreshDelay(115*1000);
 });
 
 
