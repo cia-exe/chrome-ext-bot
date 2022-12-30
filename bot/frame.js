@@ -78,14 +78,15 @@ window.addEventListener("load", myMain, false);
 function myMain(evt) {
     // DO YOUR STUFF HERE.
     console.log("myMain " + evt.type);
+    //localStorage.removeItem("selectElements") // test empty case
 
     try {
         savedElements = JSON.parse(localStorage.getItem("selectElements"));
-        console.log('@@selectElements: ' + savedElements);
-        console.log('@@selectElements: ' + typeof (savedElements) + ', len=' + savedElements?.length);
+        console.log('@@savedElements: ' + savedElements);
+        console.log('@@savedElements: ' + typeof (savedElements) + ', len=' + savedElements?.length);
         //savedElements?.forEach(o => console.log('@: ' + o));
     } catch (error) {
-        console.log('error' + error);
+        console.log('@@error' + error);
         savedElements = null;
     }
 
@@ -124,7 +125,8 @@ function myMain(evt) {
     nlist.forEach(o => {
 
         // check if o is new data.
-        var idx = savedElements.indexOf(o.value.substring(0, 8)); // todo: use Set to improve performance.
+        var idx = savedElements?.indexOf(o.value.substring(0, 8)); // todo: use Set to improve performance.
+        //var idx=-1; //test
 
         console.log(`@@(${++i}) ${o.value}, ${o.id}, ${o.disabled}, ${idx}, t:${o}`);
 
@@ -139,9 +141,9 @@ function myMain(evt) {
     let save = true; // set true to save data before real action!
     if (save) {
 
-        if (true) { // fake data (delete some data to fake new data for next load) !!
+        if (false) { // fake data (delete some data to fake new data for next load) !!
 
-            nlist = [...nlist].filter(x => x.value.indexOf('CC11088') < 0 && x.value.indexOf('CC11125')<0) // test
+            nlist = [...nlist].filter(x => x.value.indexOf('CC11299') < 0 && x.value.indexOf('CC11195')<0) // test
 
             //savedElements = savedElements.filter(x => x != 'insurance-tax-check-8' && x != 'insurance-tax-check-1') // test
             // 0: {eventId: "CC11088", installmentEvent: "Y", regEndDate: "2022-10-31T15:59:59.000Z", subItem: "Y"}
@@ -157,7 +159,7 @@ function myMain(evt) {
         if (nlist.length > 3 && (savedElements?.length != nlist.length)) {
             savedElements = [...nlist].map(x => x.value.substring(0,8));
 
-            console.log('@@save savedElements:' + savedElements.length + ': '+savedElements);
+            console.log('@@!!! save savedElements:' + savedElements.length + ': '+savedElements);
             localStorage.setItem("selectElements", JSON.stringify(savedElements));
         }
     }

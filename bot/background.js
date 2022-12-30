@@ -173,7 +173,7 @@ function initTriggerDates() {
     let debug = false
 
     let shiftTarget = 0; // find it from the logs of test server
-    let triggerSecs = [53000, 60033, 60500, 61000, 61500]
+    let triggerSecs = [53000, 60033, 60500, 61000, 61500, 62000, 63000, 64000]
 
     //let triggerSecs = [50000, 55000, 60003, 60500, 61000, 63000, 65000]
     //let triggerSecs = [49000, 60000 - shiftTarget, 60300, 60600, 60900, 65000]
