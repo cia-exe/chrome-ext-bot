@@ -73,14 +73,26 @@ function checkAndSet(str) {
 
 
 var savedElements;
+var saveTime;
 
 window.addEventListener("load", myMain, false);
 function myMain(evt) {
     // DO YOUR STUFF HERE.
     console.log("myMain " + evt.type);
     //localStorage.removeItem("selectElements") // test empty case
+    //localStorage.removeItem("saveTime") // test empty case
+
 
     try {
+
+        saveTime = Number(localStorage.getItem("saveTime"));
+        console.log(`@@saveTime(${typeof(saveTime)})=${saveTime}`);
+
+        //let now = new Date(Date.now());// object
+        //let now = Date.now(); //ms, (number)=1675054686873
+        //console.log(`@@saveTime now(${typeof(now)})=${now}`);
+        //console.log('@@test: ' + (now-saveTime));
+
         savedElements = JSON.parse(localStorage.getItem("selectElements"));
         console.log('@@savedElements: ' + savedElements);
         console.log('@@savedElements: ' + typeof (savedElements) + ', len=' + savedElements?.length);
@@ -138,12 +150,16 @@ function myMain(evt) {
     );
     console.log('@@ checked: ' + checked);
 
-    let save = true; // set true to save data before real action!
+    //let save = false; // set true to save data before real action!
+    let tDiff=Date.now()- saveTime;
+    let save = tDiff > 60*1000*6;
+    console.log(`@@ SAVE=${save}, tDiff=${tDiff}`);
+
     if (save) {
 
         if (false) { // fake data (delete some data to fake new data for next load) !!
 
-            nlist = [...nlist].filter(x => x.value.indexOf('CC11299') < 0 && x.value.indexOf('CC11195')<0) // test
+            nlist = [...nlist].filter(x => x.value.indexOf('CC11321') < 0 && x.value.indexOf('CC11323')<0) // test
 
             //savedElements = savedElements.filter(x => x != 'insurance-tax-check-8' && x != 'insurance-tax-check-1') // test
             // 0: {eventId: "CC11088", installmentEvent: "Y", regEndDate: "2022-10-31T15:59:59.000Z", subItem: "Y"}
@@ -161,18 +177,22 @@ function myMain(evt) {
 
             console.log('@@!!! save savedElements:' + savedElements.length + ': '+savedElements);
             localStorage.setItem("selectElements", JSON.stringify(savedElements));
+            localStorage.setItem("saveTime", Date.now()); // @@saveTime: 1675053251384 (string)
         }
+
     }
 
+
     let b = document.getElementById("saveEventBtn");
-    console.log('@@b: ' + b + checked);
+    console.log('@@b: ' + b +', checked='+ checked);
+    if(b==null) console.log('@@btn not found!!!');
 
     if (checked > 0) {
         if (save) {
             console.log('@@ fake saveEventBtn click:' + checked);
         } else {
             console.log('@@ !!! saveEventBtn click:' + checked);
-            b.click(); // post data !! real action!!
+            b?.click(); // post data !! real action!!
         }
     }
 

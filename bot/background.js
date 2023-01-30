@@ -170,7 +170,7 @@ function initTriggerDates() {
     // server2 52335 56237 59998 61028 63032 65036
     // delay2= 335   37    31    28    32    36
 
-    let debug = false
+    let debug = false;
 
     let shiftTarget = 0; // find it from the logs of test server
     let triggerSecs = [53000, 60033, 60500, 61000, 61500, 62000, 63000, 64000]
@@ -190,9 +190,9 @@ function initTriggerDates() {
         new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), (n.getSeconds() > 40 ? n.getMinutes() + 1 : n.getMinutes()), 0, 0)
         : new Date(n.getFullYear(), n.getMonth(), n.getDate(), 9, 59, 0, 0);
 
-    if (n > t) { // now < target
+    if (!debug && n > t) { // now < target
         t = t.addDays(1);
-        console.log(`add 1day to t, now=${n}, t=${t}`);
+        console.log(`@@ !!! add 1day to t, now=${n}, t=${t}`);
     }
 
     let i = 0
@@ -238,7 +238,7 @@ chrome.browserAction.onClicked.addListener(function (tab) {
     let t = initTriggerDates()
     //let t = initTrggerInterval()
 
-    let strTime = 'target time:' + toDateTimeStr(t) + ', now=' + toTimeStr(new Date());
+    let strTime = 'target time:' + toDateTimeStr(t) + ', now=' + toTimeStr(new Date()) + '\n\nPlease focus on the current browser. New tabs will be created on it!';
     let oStr = strTab + '\n' + strTime;
     console.log(oStr);
     alert(oStr); // blocking
