@@ -173,7 +173,7 @@ function initTriggerDates() {
     let debug = false;
 
     let shiftTarget = 0; // find it from the logs of test server
-    let triggerSecs = [53000, 60033, 60500, 61000, 61500, 62000, 63000, 64000]
+    let triggerSecs = [53000, 60002, 60500, 61000, 61500, 62000, 63000, 64000]
 
     //let triggerSecs = [50000, 55000, 60003, 60500, 61000, 63000, 65000]
     //let triggerSecs = [49000, 60000 - shiftTarget, 60300, 60600, 60900, 65000]
@@ -188,7 +188,7 @@ function initTriggerDates() {
 
     let t = debug ? //Date(year, month, day, hours, minutes, seconds, milliseconds)
         new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), (n.getSeconds() > 40 ? n.getMinutes() + 1 : n.getMinutes()), 0, 0)
-        : new Date(n.getFullYear(), n.getMonth(), n.getDate(), 9, 59, 0, 0);
+        : new Date(n.getFullYear(), n.getMonth(), n.getDate(), 13, 59, 0, 0);//9, 59, 0, 0);
 
     if (!debug && n > t) { // now < target
         t = t.addDays(1);
